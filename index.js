@@ -13,7 +13,7 @@ console.log("Server Started");
 
 io.on('connection', socket => {
   // Print
-  console.log("Connection made!!!");
+  console.log("Connection made!");
   //console.log("socket.id", socket.id);
   // Functions' declaration
   socket.on('newGame', handleNewGame);
@@ -79,7 +79,6 @@ io.on('connection', socket => {
     }
   }
 
-  
 
   // Helping functions
   function printNumRoomMembers(roomName){
@@ -89,5 +88,23 @@ io.on('connection', socket => {
   socket.on('disconnect', function () {
     console.log("Disonnection!!");
   });
+
+
+  // Multi-player impl.
+  socket.on('player move', function(data) {
+		//console.log('recv: move: '+JSON.stringify(data));
+    io.emit('updateAvatarPosition', { x: data["position"][0], z: data["position"][2] })
+		currentPlayer.position = data.position;
+
+		//socket.broadcast.emit('player move', currentPlayer);
+	});
+
+  socket.on('player turn', function(data) {
+		//console.log('recv: turn: '+JSON.stringify(data));
+    io.emit('updateAvatarDirection', {angleValue: data["rotation"][1]})  
+    currentPlayer.rotation = data.rotation;
+
+		//socket.broadcast.emit('player turn', currentPlayer);
+	});
 
 });
