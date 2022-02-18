@@ -7,6 +7,7 @@ let io = require('socket.io')(process.env.PORT || 3001);
 // Rooms impl.
 //const { makeid } = require('./utils');
 const clientRooms = {};
+const roomVRWorldType = {};
 
 
 console.log("Server Started");
@@ -26,13 +27,13 @@ io.on('connection', socket => {
   function handleNewGame(roomNameObj) {
     //let roomName = makeid(5);
     let roomName = roomNameObj["gameCode"];
-    //let roomName = 'ss123';
-    console.log("roomName : ", roomName, ", type: ", typeof(roomName));
-
+    let isVRWrorld_1 = roomNameObj["isVRWorld_1"];
     clientRooms[socket.id] = roomName;
+    roomVRWorldType[roomName] = isVRWrorld_1;
+    //console.log("socket.id : ", socket.id, "roomVRWorldType[socket.id] ", roomVRWorldType[socket.id]);
+
     //TODO: send name to frontend
     socket.join(roomName);
-    console.log("Num Room Members(new): ", io.sockets.adapter.rooms[roomName].length);
     printNumRoomMembers(roomName); //Print number of members
   }
 
@@ -72,7 +73,7 @@ io.on('connection', socket => {
       //socket.join(roomName);
       //printNumRoomMembers(roomName); //Print number of members
       console.log("Info: Room exist!??");
-      io.emit('checkRoomExistance', {RoomStatus: true})
+      io.emit('checkRoomExistance', {RoomStatus: true, roomVRWorldType: roomVRWorldType[roomName]})
     } else {
       console.log("Warning: Room doesn't exist!!!??");
       io.emit('checkRoomExistance', {RoomStatus: false})
@@ -80,7 +81,6 @@ io.on('connection', socket => {
   }
 
   
-
   // Helping functions
   function printNumRoomMembers(roomName){
     console.log("Num Room Members(new): ", io.sockets.adapter.rooms[roomName].length);
