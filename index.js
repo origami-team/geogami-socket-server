@@ -24,13 +24,12 @@ io.on('connection', socket => {
   socket.on('checkRoomExistance', handleCheckRoomExistance);
 
   // Functions' definitions
-  function handleNewGame(roomNameObj) {
+  function handleNewGame(gameCodeRecieved) {
     //let roomName = makeid(5);
-    let roomName = roomNameObj["gameCode"];
-    let isVRWrorld_1 = roomNameObj["isVRWorld_1"];
+    let roomName = gameCodeRecieved["gameCode"];
+    let isVRWrorld_1 = gameCodeRecieved["isVRWorld_1"];
     clientRooms[socket.id] = roomName;
-    roomVRWorldType[roomName] = isVRWrorld_1;
-    //console.log("socket.id : ", socket.id, "roomVRWorldType[socket.id] ", roomVRWorldType[socket.id]);
+    roomVRWorldType[roomName] = isVRWrorld_1; // to send the VR world type in `checkRoomExistance`
 
     //TODO: send name to frontend
     socket.join(roomName);
@@ -66,14 +65,12 @@ io.on('connection', socket => {
     io.to(avatarHeading["gameCode"]).emit('updateAvatarDirection', {angleValue: avatarHeading["x_axis"]})  
   }
 
-  function handleCheckRoomExistance(roomNameObj) {
-    let roomName = roomNameObj["gameCode"];
+  function handleCheckRoomExistance(gameCodeRecieved) {
+    let roomCode = gameCodeRecieved["gameCode"];
     // Check if room is created
-    if(io.sockets.adapter.rooms[roomName]){
-      //socket.join(roomName);
-      //printNumRoomMembers(roomName); //Print number of members
+    if(io.sockets.adapter.rooms[roomCode]){
       console.log("Info: Room exist!??");
-      io.emit('checkRoomExistance', {RoomStatus: true, roomVRWorldType: roomVRWorldType[roomName]})
+      io.emit('checkRoomExistance', {roomCode: roomCode ,roomStatus: true, roomVRWorldType: roomVRWorldType[roomCode]})
     } else {
       console.log("Warning: Room doesn't exist!!!??");
       io.emit('checkRoomExistance', {RoomStatus: false})
