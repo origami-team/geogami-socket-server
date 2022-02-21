@@ -69,15 +69,14 @@ io.on('connection', socket => {
     let roomCode = gameCodeRecieved["gameCode"];
     // Check if room is created
     if(io.sockets.adapter.rooms[roomCode]){
-      console.log("Info: Room exist!??");
+      console.log("Info: Room exist!!");
       io.emit('checkRoomExistance', {roomCode: roomCode ,roomStatus: true, roomVRWorldType: roomVRWorldType[roomCode]})
     } else {
       console.log("Warning: Room doesn't exist!!!??");
-      io.emit('checkRoomExistance', {RoomStatus: false})
+      io.emit('checkRoomExistance', {roomCode: roomCode ,roomStatus: false})
     }
   }
 
-  
   // Helping functions
   function printNumRoomMembers(roomName){
     console.log("Num Room Members(new): ", io.sockets.adapter.rooms[roomName].length);
