@@ -25,7 +25,7 @@ io.on('connection', async (socket) => {
   // socket.on('assignPlayerNumber', handleAssignPlayerNumber);
 
   // Functions' definitions
-  function handleJoinGame(roomNameObj) {
+  function handleJoinGame(gameCodeRecieved) {
     console.log("/// gameCodeRecieved: ", gameCodeRecieved);
     // Assign received gamecode to a var.
     let roomName = gameCodeRecieved["gameCode"];
@@ -50,8 +50,8 @@ io.on('connection', async (socket) => {
     // send playerNo to the user using socket ID
     io.to(socket.id).emit('assignPlayerNumber', { playerNo: playerNum, playerID: socket.id })
 
-    /* Notify all players of number of enrolled players (to be able to start game) */
-    io.to(roomName).emit('userJoined', { joinedPlayersCount: playerNum })
+    /* Notify all players of number of enrolled player (to be able to start game wen all are in) */
+    socket.to(roomName).emit('PlayerJoined', { joinedPlayersCount: playerNum })
 
 
     const room = io.sockets.adapter.rooms[roomName];
