@@ -31,9 +31,9 @@ io.on('connection', async (socket) => {
   /*   function checkNumberOfPlayers(roomName) {
     } */
 
-  // Functions' definitions
-  function handleJoinGame(gameCodeRecieved) {
-    console.log("/// gameCodeRecieved: ", gameCodeRecieved);
+  /*********************/
+  async function handleJoinGame(gameCodeRecieved) {
+    console.log("gameCodeRecieved: ", gameCodeRecieved);
     // Assign received gamecode to a var.
     let roomName = gameCodeRecieved["gameCode"];
     let gameNumPlayers = gameCodeRecieved["gameNumPlayers"];
@@ -54,10 +54,9 @@ io.on('connection', async (socket) => {
       }
     } else {
       // Enterd only when room is empty
-      playersCount = 1;
       // Initialize track stored status to false
       isGameTrackStored[roomName] = { status: false, game_id: undefined };
-      console.log("isGameTrackStored: ", isGameTrackStored);
+      // console.log("isGameTrackStored: ", isGameTrackStored);
     }
 
     /* Assign room name to local object */
@@ -67,6 +66,8 @@ io.on('connection', async (socket) => {
     socket.join(roomName);
 
     /* send playerNo to user using socket ID */
+    // playerNo equal the current length of users in the room
+    playersCount = io.sockets.adapter.rooms[roomName].length;
     io.to(socket.id).emit('assignPlayerNumber', { playerNo: playersCount, playerID: socket.id })
 
     /* Notify all players of number of joined players except joined member (to be able to start game wen all are in) */
@@ -77,27 +78,26 @@ io.on('connection', async (socket) => {
   }
 
   /* multiplayer */
+  /*********************/
   function handleUpdateGameTrackStauts(data) {
     let roomName = data["roomName"]
-    let game_id = data["game_id"]
+    let storedTrack_id = data["storedTrack_id"]
 
-    console.log("name: ", roomName, "///// id: ", game_id)
-    isGameTrackStored[roomName] = { status: true, game_id: game_id };
+    // console.log("name: ", roomName, " id: ", storedTrack_id)
+    isGameTrackStored[roomName] = { status: true, track_id: storedTrack_id };
   }
 
   /* multiplayer */
+  /*********************/
   // Check whether game is already stored by one of the players
   socket.on('checkIsGameTrackStored', (roomName, callback) => {
-    let trackStoredStatus = isGameTrackStored[roomName];
+    let trackDataStatus = isGameTrackStored[roomName];
     console.log("roomName: ", roomName);
-    console.log("trackStoredStatus: ", trackStoredStatus);
+    // console.log("trackStoredStatus: ", trackDataStatus);
 
     callback({
-      status: trackStoredStatus["status"]
+      trackDataStatus: trackDataStatus
     });
-
-    /* send game track stutus to sender */
-    // io.to(socket.id).emit('isGameTrackStored', { trackStoredStatus: trackStoredStatus["status"] })
   });
 
   function handleUpdateAvatarPosition(avatarPosition) {
