@@ -21,6 +21,7 @@ io.on('connection', async (socket) => {
   // socket.on('newGame', handleNewGame);
   /* socket.on('checkAbilityToJoinGame', (gameDetail, callback) */
   socket.on('joinGame', handleJoinGame);
+  socket.on('changePlayerStauts', handleChangePlayerStauts);
   socket.on('updateGameTrackStauts', handleUpdateGameTrackStauts);
   /* socket.on('checkgameStatus', handleCheckgameStatus); */
   socket.on('updateAvatarPosition', handleUpdateAvatarPosition);
@@ -63,8 +64,10 @@ io.on('connection', async (socket) => {
 
   /* multiplayer */
   /*********************/
-  async function handleJoinGame(roomName) {
-    console.log("roomName: ", roomName);
+  async function handleJoinGame(playerInfo) {
+    console.log("playerInfo: ", playerInfo);
+    let roomName = playerInfo['roomName'];
+    let playerName = playerInfo['playerName'];
 
     /* check whether room existsm, if not initialze game status object */
     if (!io.sockets.adapter.rooms[roomName]) {
@@ -89,7 +92,7 @@ io.on('connection', async (socket) => {
     let playersCount = io.sockets.adapter.rooms[roomName].length;
 
     /* store player data to a public variable */
-    roomsData[roomName][playersCount - 1] = { id: playersCount, name: "ali", status: "active" };
+    roomsData[roomName][playersCount - 1] = { id: playersCount, name: playerName, status: "active" };
     console.log("roomsData2: ", roomsData[roomName])
 
     /* store room name and player id using socket, to use it in when user diconnect*/
@@ -105,6 +108,22 @@ io.on('connection', async (socket) => {
     printNumRoomMembers(roomName); //Print number of members
   }
 
+  /* multiplayer */
+  /*********************/
+  function handleChangePlayerStauts(status) {
+    console.log("status: ", status);
+    if (socket.playerData) {
+      let roomName = socket.playerData['roomName']
+      let playerID = socket.playerData['playerID']
+
+      // access player data using roomname and userId1-1
+      /* condition to make sure finished status never change  */
+      if(roomsData[roomName][playerID - 1]['status'] != "finished tasks"){
+        roomsData[roomName][playerID - 1]['status'] = status;
+        console.log("\nDisonnection!!(roomsData):", roomsData);
+      }
+    }
+  }
 
   /* multiplayer */
   /*********************/
@@ -125,7 +144,7 @@ io.on('connection', async (socket) => {
   socket.on('checkGameStatus', (roomName, callback) => {
     let trackDataStatus = gameStatus[roomName];
 
-    console.log("// checkgameStatus, trackDataStatus: ", trackDataStatus)
+    //console.log("// checkgameStatus, trackDataStatus: ", trackDataStatus)
 
     callback({
       trackDataStatus: trackDataStatus
@@ -161,29 +180,9 @@ io.on('connection', async (socket) => {
 
   socket.on('disconnect', function () {
     console.log("\n\n\n\n Disonnection!!");
-    console.log("\nDisonnection!! (roomsData):", roomsData);
     
     /* update player status before disconnection */
-    if (socket.playerData) {
-      let roomName = socket.playerData['roomName']
-      let playerID = socket.playerData['playerID']
-      console.log("\nDisonnection!! (roomName):", roomName);
-      console.log("\nDisonnection!! (playerID):", playerID);
-      console.log("\nDisonnection!! (roomsData):", roomsData[roomName]);
-
-      // access player data using roomname and userId-1
-      roomsData[roomName][playerID - 1]['status'] = "disconnected"
-      console.log("\nDisonnection!!(roomsData):", roomsData);
-    }
-
-
-
-
-
-
-
-    // roomsData[socket.playerData[]]
-
+    handleChangePlayerStauts("disconnected");
   });
 
 });
