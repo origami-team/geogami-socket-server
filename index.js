@@ -28,12 +28,17 @@ io.on('connection', async (socket) => {
   socket.on('updateAvatarPosition', handleUpdateAvatarPosition);
   socket.on('updateAvatarDirection', handleUpdateAvatarDirection);
   socket.on('checkRoomExistance', handleCheckRoomExistance);
+  socket.on('requestPlayersLocation', handleRequestPlayersLocation);
+  socket.on('updatePlayersLocation', handleUpdatePlayersLocation);
 
   /* new impl (multiplayer-realworld) */
   // socket.on('assignPlayerNumber', handleAssignPlayerNumber);
 
-  /*********************/
-  /* multiplayer (check Player Previous Join)*/
+  /*-------------------------------------*/
+  /* Start multiplayer functions */
+  /*-------------------------------------*/
+
+  /* check Player Previous Join */
   /*********************/
   socket.on('checkPlayerPreviousJoin', (storedplayerInfo, callback) => {
     console.log("🚀 (checkPlayerPreviousJoin) storedplayerInfo: ", storedplayerInfo);
@@ -45,7 +50,7 @@ io.on('connection', async (socket) => {
     /* check if room exist - then check if player no exists - then theck if player status is disconnected */
     /* To do: reomve name check later */
     if (roomsData[sRoomName] && roomsData[sRoomName][sPlayerNo - 1]
-      && roomsData[sRoomName][sPlayerNo - 1]['connectionStatus'] == 'disconnected' 
+      && roomsData[sRoomName][sPlayerNo - 1]['connectionStatus'] == 'disconnected'
       && roomsData[sRoomName][sPlayerNo - 1]['name'] == sPlayerName) {
 
       console.log("--🚀---🚀-- (checkPlayerPreviousJoin) player is found diconnected: ", sPlayerName);
@@ -64,11 +69,8 @@ io.on('connection', async (socket) => {
       joinedPlayersCount: (roomsData[sRoomName] ? roomsData[sRoomName].length : 0)
     });
   });
-  /***/
 
-  /*********************/
-  /* multiplayer (check Ability To Join Game)*/
-  /* multiplayer */
+  /* check Ability To Join Game */
   /*********************/
   socket.on('checkAbilityToJoinGame', (gameDetail, callback) => {
     console.log("🚀 (checkAbilityToJoinGame) gameDetail: ", gameDetail);
@@ -96,10 +98,8 @@ io.on('connection', async (socket) => {
       isRoomFull: isRoomFull
     });
   });
-  /***/
 
-
-  /* multiplayer */
+  /* Join room */
   /*********************/
   async function handleJoinGame(playerInfo) {
     console.log("🚀 (handleJoinGame) playerInfo: ", playerInfo);
@@ -163,7 +163,7 @@ io.on('connection', async (socket) => {
   }
 
 
-  /* multiplayer */
+  /* change connection status */
   /*********************/
   function handleChangePlayerConnectionStauts(connStatus) {
     console.log("🚀(handleChangePlayerConnectionStauts) connStatus: ", connStatus);
@@ -191,7 +191,7 @@ io.on('connection', async (socket) => {
     }
   }
 
-  /* multiplayer */
+  /* update game track status */
   /*********************/
   function handleUpdateGameTrackStauts(data) {
     let roomName = data["roomName"]
@@ -204,7 +204,7 @@ io.on('connection', async (socket) => {
   }
 
 
-  /* multiplayer */
+  /* check game track status */
   /*********************/
   // Check whether game is already stored by one of the players
   socket.on('checkGameStatus', (roomName, callback) => {
@@ -217,6 +217,35 @@ io.on('connection', async (socket) => {
     });
   });
 
+  /* request players location */
+  /*********************/
+  function handleRequestPlayersLocation(roomName) {
+    console.log("/🚀/ handleRequestPlayersLocation, roomName: ", roomName)
+
+    socket.to(roomName).emit('requestPlayerLocation');
+  }
+
+  /* update player location */
+  /*********************/
+  function handleUpdatePlayersLocation(data) {
+    let roomName = data.roomName;
+    let playerLoc = data.playerLoc;
+    let playerNo = data.playerNo;
+
+    console.log("/🚀/ handleUpdatePlayersLocation, data: ", data)
+    io.to(instructorID[roomName]).emit('updateInstrunctorMapView', { playerLoc: playerLoc, playerNo: playerNo });
+
+  }
+  /*------------------------------*/
+  /* End of multiplayer functions */
+  /*------------------------------*/
+
+  
+  /*-------------------------------------*/
+  /***************************************/
+  /* Start virtual environment functions */
+
+  /*  */
   function handleUpdateAvatarPosition(avatarPosition) {
     console.log("Loc", { x: avatarPosition["x_axis"], z: avatarPosition["y_axis"], r_code: avatarPosition["gameCode"] });
     io.to(avatarPosition["gameCode"]).emit('updateAvatarPosition', { x: avatarPosition["x_axis"], z: avatarPosition["y_axis"] })
@@ -238,6 +267,9 @@ io.on('connection', async (socket) => {
       io.emit('checkRoomExistance', { roomCode: roomCode, roomStatus: false })
     }
   }
+  /* End of virtual environment functions */
+  /****************************************/
+  /*--------------------------------------*/
 
   // Helping functions
   function printNumRoomMembers(roomName) {
