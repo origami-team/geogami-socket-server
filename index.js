@@ -35,9 +35,7 @@ io.on('connection', socket => {
 
   // Functions' definitions
   function handleNewGame(roomNameObj) {
-    //let roomName = makeid(5);
     let roomName = roomNameObj["gameCode"];
-    //let roomName = 'ss123';
     console.log("roomName : ", roomName, ", type: ", typeof (roomName));
 
     clientRooms[socket.id] = roomName;
@@ -77,15 +75,16 @@ io.on('connection', socket => {
   }
 
   function handleCheckRoomExistance(roomNameObj) {
+    console.log('🚀(handleCheckRoomExistance):  ', roomNameObj["gameCode"]);
     let roomName = roomNameObj["gameCode"];
     // Check if room is created
     if (io.sockets.adapter.rooms[roomName]) {
       //socket.join(roomName);
       //printNumRoomMembers(roomName); //Print number of members
-      console.log("Info: Room exist!??");
+      console.log("🚀🚀 Info: Room exist!??");
       io.emit('checkRoomExistance', { RoomStatus: true })
     } else {
-      console.log("Warning: Room doesn't exist!!!??");
+      console.log("🚀🚀 Warning: Room doesn't exist!!!??");
       io.emit('checkRoomExistance', { RoomStatus: false })
     }
   }
@@ -104,17 +103,44 @@ io.on('connection', socket => {
 
   // Multi-player impl.
   //#region 
+
+  /*************/
   socket.on('player move', function (data) {
-    //console.log('recv: move: '+JSON.stringify(data));
+    console.log('🚀(player move) data:', data);
+    // console.log('recv: move: '+JSON.stringify(data));
     //io.emit('updateAvatarPosition', { x: data["position"][0], z: data["position"][2] })
     currentPlayer.position = data.position;
 
-    //socket.broadcast.emit('player move', currentPlayer);
-    socket.broadcast.emit('player move', currentPlayer);
-    console.log('(player move), move by: '+ currentPlayer.name);
+    // socket.broadcast.emit('player move', currentPlayer);
+    // socket.broadcast.emit('player move', currentPlayer);
+    console.log('(player move), move by: ' + currentPlayer.name);
   });
 
+  /*************/
+  /* this function to make walking looks smooth */
+  socket.on('update avatar walk', function (val) {
+    console.log('🚀(avatar walk) data:', val);
+    currentPlayer.walkVal = val;
+    socket.broadcast.emit('update avatar walk', currentPlayer);
+    console.log('(player move), move by: ' + currentPlayer.name);
+
+    console.log('🚀(player turn) clients[currentPlayer.playerNo].position', clients[currentPlayer.playerNo].position);
+  });
+
+    /*************/
+    /* this function to make turning looks smooth */
+    socket.on('update avatar turn', function (data) {
+      console.log('🚀(avatar turn) trunVal:', data);
+      currentPlayer.rotation = data.rotation;
+      socket.broadcast.emit('update avatar turn', currentPlayer);
+      console.log('(player turn), turn by: ' + currentPlayer.name);
+
+      console.log('🚀(player turn) clients[currentPlayer.playerNo].rotation', clients[currentPlayer.playerNo].rotation);
+    });
+
+
   socket.on('player turn', function (data) {
+    console.log('🚀(player turn) ');
     //console.log('recv: turn: '+JSON.stringify(data));
     io.emit('updateAvatarDirection', { angleValue: data["rotation"][1] })
     currentPlayer.rotation = data.rotation;
@@ -122,28 +148,33 @@ io.on('connection', socket => {
     //socket.broadcast.emit('player turn', currentPlayer);
   });
 
+
   socket.on('player connect', function () {
-    console.log("(player connect)_1a, clients.length: "+ clients.length);
-    if(clients.length>0){
-      console.log("(player connect)_1b, clients.detail: "+ clients[0]);
-    }
-    for (var i = 0; i < clients.length; i++) {
-      var playerConnected = {
-        name: clients[i].name,
-        position: clients[i].position,
-        rotation: clients[i].rotation
-        //health: clients[i].health
-      };
-      // in your current game, we need to tell you about the other players.
-      socket.emit('other player connected', playerConnected);
-      console.log('(player connect)_2, emit: other player connected: ' + JSON.stringify(playerConnected));
+    console.log('🚀(player connect) ');
+    console.log("(player connect)_1a, clients.length: " + clients.length);
+    if (clients.length > 0) {
+
+      console.log("(player connect)_1b, clients.detail - clients[0].name: " + clients[0].name);
+
+      for (var i = 0; i < clients.length; i++) {
+        var playerConnected = {
+          name: clients[i].name,
+          position: clients[i].position,
+          rotation: clients[i].rotation
+          //health: clients[i].health
+        };
+        // in your current game, we need to tell you about the other players.
+        socket.emit('other player connected', playerConnected);
+        console.log('(player connect)_2, emit: other player connected: ' + JSON.stringify(playerConnected));
+      }
     }
     console.log('(player connect)_3, Done-player connect--//');
 
   });
 
   socket.on('play', function (data) {
-    console.log('(play),' +currentPlayer.name + ' recv: play: ' + JSON.stringify(data));
+    console.log('🚀(play) ');
+    console.log('(play),' + currentPlayer.name + ' recv: play: ' + JSON.stringify(data));
     // if this is the first person to join the game init the enemies
     /* if (clients.length === 0) {
       numberOfEnemies = data.enemySpawnPoints.length;
@@ -176,9 +207,11 @@ io.on('connection', socket => {
     //var randomSpawnPoint = playerSpawnPoints[Math.floor(Math.random() * playerSpawnPoints.length)];
     currentPlayer = {
       name: data.name,
-      position: [224,100,74],
-      rotation: [0,0,0]
-      //health: 100
+      position: [224, 100, 74], // to do: update
+      // position: [224+(5*clients.length), 100, 74], // to do: update
+      rotation: [0, 0, 0],
+      walkVal: 0.0,
+      playerNo: clients.length      /* to update player position and direction  */
     };
     clients.push(currentPlayer);
     // in your current game, tell you that you have joined
@@ -187,10 +220,6 @@ io.on('connection', socket => {
     // in your current game, we need to tell the other players about you.
     socket.broadcast.emit('other player connected', currentPlayer);
   });
-
-
-
-
   //#endregion
 
 });
