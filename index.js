@@ -12,6 +12,7 @@ const roomsData = {}            // {[{ id: playersCount + 1, name: playerName, c
 const roomVRWorldType = {};     // not used currently -----
 const instructorID = {};
 
+
 console.log("Server Started");
 
 io.on('connection', async (socket) => {
@@ -19,24 +20,27 @@ io.on('connection', async (socket) => {
   console.log("Connection made!!!");
 
   /* Functions' declaration */
-  // socket.on('newGame', handleNewGame);
   /* socket.on('checkAbilityToJoinGame', (gameDetail, callback) */
   socket.on('joinGame', handleJoinGame);
   socket.on('changePlayerConnectionStauts', handleChangePlayerConnectionStauts);
   socket.on('updateGameTrackStauts', handleUpdateGameTrackStauts);
   /* socket.on('checkgameStatus', handleCheckgameStatus); */
+  socket.on('requestPlayersLocation', handleRequestPlayersLocation);
+  socket.on('updatePlayersLocation', handleUpdatePlayersLocation);
+  /*  */
+  socket.on('newGame', handleNewGame);
+  socket.on('joinVEGame', handleJoinVEGame);
   socket.on('updateAvatarPosition', handleUpdateAvatarPosition);
   socket.on('updateAvatarDirection', handleUpdateAvatarDirection);
   socket.on('checkRoomExistance', handleCheckRoomExistance);
-  socket.on('requestPlayersLocation', handleRequestPlayersLocation);
-  socket.on('updatePlayersLocation', handleUpdatePlayersLocation);
+
 
   /* new impl (multiplayer-realworld) */
   // socket.on('assignPlayerNumber', handleAssignPlayerNumber);
 
-  /*-------------------------------------*/
-  /* Start multiplayer functions */
-  /*-------------------------------------*/
+  /*-----------------------------*/
+  /*******************************/
+  /* Start multiplayer realworld functions */
 
   /* check Player Previous Join */
   /*********************/
@@ -162,7 +166,6 @@ io.on('connection', async (socket) => {
     printNumRoomMembers(roomName); //Print number of members
   }
 
-
   /* change connection status */
   /*********************/
   function handleChangePlayerConnectionStauts(connStatus) {
@@ -187,7 +190,7 @@ io.on('connection', async (socket) => {
         console.log("\n 🚀🚀 (handleChangePlayerConnectionStauts) after status change - (roomData):", roomsData[roomName]);
       }
     } else {
-      console.log("🚀🚀 (handleChangePlayerConnectionStauts): instructor", "( ", connStatus, " ) successfully");
+      // console.log("🚀🚀 (handleChangePlayerConnectionStauts): instructor", "( ", connStatus, " ) successfully");
     }
   }
 
@@ -202,7 +205,6 @@ io.on('connection', async (socket) => {
 
     console.log("// UpdateGameTrackStauts, gameStatus: ", gameStatus[roomName])
   }
-
 
   /* check game track status */
   /*********************/
@@ -236,37 +238,81 @@ io.on('connection', async (socket) => {
     io.to(instructorID[roomName]).emit('updateInstrunctorMapView', { playerLoc: playerLoc, playerNo: playerNo });
 
   }
-  /*------------------------------*/
+
   /* End of multiplayer functions */
+  /********************************/
   /*------------------------------*/
 
-  
-  /*-------------------------------------*/
-  /***************************************/
-  /* Start virtual environment functions */
 
-  /*  */
-  function handleUpdateAvatarPosition(avatarPosition) {
-    console.log("Loc", { x: avatarPosition["x_axis"], z: avatarPosition["y_axis"], r_code: avatarPosition["gameCode"] });
-    io.to(avatarPosition["gameCode"]).emit('updateAvatarPosition', { x: avatarPosition["x_axis"], z: avatarPosition["y_axis"] })
+  /*-----------------------------*/
+  /*******************************/
+  /* Start single player V.E. functions */
+
+  /* step 1: join game using geogmai App  */
+  function handleNewGame(gameCodeRecieved) {
+    //let roomName = makeid(5);
+    console.log("gameCodeRecieved: ", gameCodeRecieved);
+    let roomName = gameCodeRecieved["gameCode"];
+    let isVRWrorld_1 = gameCodeRecieved["isVRWorld_1"];
+    // clientRooms[socket.id] = roomName;
+    roomVRWorldType[roomName] = isVRWrorld_1; // to send the VR world type in `checkRoomExistance`
+
+    //TODO: send name to frontend
+    socket.join(roomName);
+    printNumRoomMembers(roomName); //Print number of members
   }
 
-  function handleUpdateAvatarDirection(avatarHeading) {
-    console.log("Direction", { angleValue: avatarHeading["x_axis"], r_code: avatarHeading["gameCode"] });
-    io.to(avatarHeading["gameCode"]).emit('updateAvatarDirection', { angleValue: avatarHeading["x_axis"] })
-  }
-
+  /*******************************************************************************/
+  /* step 2:  V.E. check if room exists (game is opend using geogmai App) or not */
   function handleCheckRoomExistance(gameCodeRecieved) {
     let roomCode = gameCodeRecieved["gameCode"];
     // Check if room is created
     if (io.sockets.adapter.rooms[roomCode]) {
       console.log("Info: Room exist!!");
+      console.log("Info: Room exist!! roomVRWorldType[roomCode]: ", roomVRWorldType[roomCode]);
+      console.log("Info: Room exist!! roomCode: ", roomCode);
+      /* send back room code and V.E. type */
       io.emit('checkRoomExistance', { roomCode: roomCode, roomStatus: true, roomVRWorldType: roomVRWorldType[roomCode] })
     } else {
       console.log("Warning: Room doesn't exist!!!??");
       io.emit('checkRoomExistance', { roomCode: roomCode, roomStatus: false })
     }
   }
+
+  /****************************************/
+  /* step 3: to join game using V.E. App  */
+  function handleJoinVEGame(roomNameObj) {
+    let roomName = roomNameObj["gameCode"];
+    console.log("roomName obj: ", roomNameObj);
+    const room = io.sockets.adapter.rooms[roomName];
+    console.log("room: ", room);
+
+    // clientRooms[socket.id] = roomName;
+
+    // Check if room is created
+    //if(! io.sockets.adapter.rooms[roomName]){
+    socket.join(roomName);
+    printNumRoomMembers(roomName); //Print number of members
+    /* } else {
+      console.log("Warning: Room doesn't exist!!!");
+    } */
+    //ToDO: add notificatoin that a new user has been joined
+  }
+
+  /*******************/
+  /* Avatar position */
+  function handleUpdateAvatarPosition(avatarPosition) {
+    console.log("Loc", { x: avatarPosition["x_axis"], z: avatarPosition["y_axis"], r_code: avatarPosition["gameCode"] });
+    io.to(avatarPosition["gameCode"]).emit('updateAvatarPosition', { x: avatarPosition["x_axis"], z: avatarPosition["y_axis"] })
+  }
+
+  /********************/
+  /* Avatar direction */
+  function handleUpdateAvatarDirection(avatarHeading) {
+    console.log("Direction", {angleValue: avatarHeading["x_axis"], r_code: avatarHeading["gameCode"] });
+    io.to(avatarHeading["gameCode"]).emit('updateAvatarDirection', { angleValue: avatarHeading["x_axis"] })
+  }
+
   /* End of virtual environment functions */
   /****************************************/
   /*--------------------------------------*/
