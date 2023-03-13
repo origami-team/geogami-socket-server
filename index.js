@@ -336,9 +336,9 @@ io.on('connection', async (socket) => {
     //io.emit('updateAvatarPosition', { x: data["position"][0], z: data["position"][2] })
     currentPlayer.position = data.position;
 
+    socket.broadcast.emit('player move', currentPlayer);
     // socket.broadcast.emit('player move', currentPlayer);
-    // socket.broadcast.emit('player move', currentPlayer);
-    console.log('(player move), move by: ' + currentPlayer.name);
+    console.log('*******(player move), move by: ' + currentPlayer.name);
   });
 
   /*************/
