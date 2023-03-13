@@ -318,7 +318,7 @@ io.on('connection', async (socket) => {
     io.to(avatarHeading["gameCode"]).emit('updateAvatarDirection', { angleValue: avatarHeading["x_axis"] })
   }
 
-  /* End of virtual environment functions */
+  /* End of single player V.E. functions */
   /****************************************/
   /*--------------------------------------*/
 
@@ -331,8 +331,7 @@ io.on('connection', async (socket) => {
   /* this fun. will update other avatars' positions, 
     in case there's an offset  */
   socket.on('player move', function (data) {
-    console.log('🚀(player move) data:', data);
-    // console.log('recv: move: '+JSON.stringify(data));
+    // console.log('🚀(player move) data:', data);
     //io.emit('updateAvatarPosition', { x: data["position"][0], z: data["position"][2] })
     currentPlayer.position = data.position;
 
@@ -345,28 +344,35 @@ io.on('connection', async (socket) => {
   /* this function to make walking looks smooth */
   socket.on('update avatar walk', function (val) {
     console.log('🚀(avatar walk) data:', val);
+    
+    /* identify current player using stored player no */
+    currentPlayer = virEnvClients[socket[socket.id]["playerNo"]];
+
     currentPlayer.walkVal = val;
     socket.broadcast.emit('update avatar walk', currentPlayer);
-    console.log('(player move), move by: ' + currentPlayer.name);
 
-    console.log('🚀(player turn) virEnvClients[currentPlayer.playerNo].position', virEnvClients[currentPlayer.playerNo].position);
+    console.log('🚀(player walk) virEnvClients[currentPlayer.playerNo].position', virEnvClients[currentPlayer.playerNo].position, ', by: ' + currentPlayer.name);
   });
 
   /*************/
   /* this function to make turning looks smooth */
   socket.on('update avatar turn', function (data) {
     console.log('🚀(avatar turn) trunVal:', data);
+
+    /* identify current player using stored player no */
+    currentPlayer = virEnvClients[socket[socket.id]["playerNo"]];
+
     currentPlayer.rotation = data.rotation;
     socket.broadcast.emit('update avatar turn', currentPlayer);
-    console.log('(player turn), turn by: ' + currentPlayer.name);
 
-    console.log('🚀(player turn) virEnvClients[currentPlayer.playerNo].rotation', virEnvClients[currentPlayer.playerNo].rotation);
+    console.log('🚀(player turn) virEnvClients[currentPlayer.playerNo].rotation', virEnvClients[currentPlayer.playerNo].rotation, ', by: ' + currentPlayer.name);
   });
 
 
   socket.on('player turn', function (data) {
     console.log('🚀(player turn) ');
     //console.log('recv: turn: '+JSON.stringify(data));
+    // update it -> socket.broadcast.emit
     io.emit('updateAvatarDirection', { angleValue: data["rotation"][1] })
     currentPlayer.rotation = data.rotation;
 
@@ -399,8 +405,7 @@ io.on('connection', async (socket) => {
 
   /*********************************/
   socket.on('play', function (data) {
-    console.log('🚀(play) ');
-    console.log('(play),' + currentPlayer.name + ' recv: play: ' + JSON.stringify(data));
+    console.log('(play1),' + currentPlayer.name + ' recv: play: ' + JSON.stringify(data));
 
     currentPlayer = {
       name: data.name,
@@ -412,10 +417,13 @@ io.on('connection', async (socket) => {
     };
     virEnvClients.push(currentPlayer);
     // in your current game, tell you that you have joined
-    console.log('(play),' + currentPlayer.name + ' emit: play: ' + JSON.stringify(currentPlayer));
+    console.log('(play2),' + currentPlayer.name + ' emit: play: ' + JSON.stringify(currentPlayer));
     socket.emit('play', currentPlayer);
     // in your current game, we need to tell the other players about you.
     socket.broadcast.emit('other player connected', currentPlayer);
+
+    /* store player name and no, to be able to update avatar position and turn */
+    socket[socket.id] = {playerName: currentPlayer.name, playerNo: currentPlayer.playerNo };
   });
   //#endregion
 
