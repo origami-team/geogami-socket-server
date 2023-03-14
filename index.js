@@ -112,6 +112,7 @@ io.on('connection', async (socket) => {
   /*********************/
   async function handleJoinGame(playerInfo) {
     console.log("🚀 (handleJoinGame) playerInfo: ", playerInfo);
+    // console.log("🚀 (handleJoinGame) playerInfo: ", (!playerInfo['playerName']?"instructor":playerInfo));
     let roomName = playerInfo['roomName'];
     let playerName = playerInfo['playerName'];
 
@@ -124,7 +125,7 @@ io.on('connection', async (socket) => {
 
       roomsData[roomName] = []
       console.log("🚀🚀 (handleJoinGame) roomName: ", roomName)
-      console.log("🚀🚀🚀(handleJoinGame) roomsData1(length): ", roomsData[roomName].length)
+      // console.log("🚀🚀🚀(handleJoinGame) roomsData1(length): ", roomsData[roomName].length)
     }
 
     /* Join player to room */
@@ -240,6 +241,7 @@ io.on('connection', async (socket) => {
     let playerNo = data.playerNo;
 
     console.log("/🚀/ handleUpdatePlayersLocation, data: ", data)
+    /* send players' updated positions only to instructor */
     io.to(instructorID[roomName]).emit('updateInstrunctorMapView', { playerLoc: playerLoc, playerNo: playerNo });
 
   }
@@ -255,6 +257,7 @@ io.on('connection', async (socket) => {
 
   /* step 1: join game using geogmai App  */
   function handleNewGame(gameCodeRecieved) {
+    console.log("------- Vir. Env. single mode ------- ");
     //let roomName = makeid(5);
     console.log("gameCodeRecieved: ", gameCodeRecieved);
     let roomName = gameCodeRecieved["gameCode"];
@@ -273,8 +276,8 @@ io.on('connection', async (socket) => {
     let roomCode = gameCodeRecieved["gameCode"];
     // Check if room is created
     if (io.sockets.adapter.rooms[roomCode]) {
-      console.log("Info: Room exist!!");
-      console.log("Info: Room exist!! roomVRWorldType[roomCode]: ", roomVRWorldType[roomCode]);
+      // console.log("Info: Room exist!!");
+      // console.log("Info: Room exist!! roomVRWorldType[roomCode]: ", roomVRWorldType[roomCode]);
       console.log("Info: Room exist!! roomCode: ", roomCode);
       /* send back room code and V.E. type */
       io.emit('checkRoomExistance', { roomCode: roomCode, roomStatus: true, roomVRWorldType: roomVRWorldType[roomCode] })
