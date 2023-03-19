@@ -9,7 +9,7 @@ let io = require('socket.io')(process.env.PORT || 3005);
 const clientRooms = {};         // clientRooms[socket.id] = roomName;
 const gameStatus = {}           // { status: bool, track_id: string }
 const roomsData = {}            // {[{ id: playersCount + 1, name: playerName, connectionStatus: "connected" }]}
-const roomVRWorldType = {};     // not used currently -----
+const roomVRWorldType_Mode = {};     // not used currently -----
 const instructorID = {};
 
 /* Vir. Env. multiplayer */
@@ -261,9 +261,10 @@ io.on('connection', async (socket) => {
     //let roomName = makeid(5);
     console.log("gameCodeRecieved: ", gameCodeRecieved);
     let roomName = gameCodeRecieved["gameCode"];
-    let isVRWrorld_1 = gameCodeRecieved["isVRWorld_1"];
+    let VirEnvType = gameCodeRecieved["VirEnvType"];
+    let isSingleMode = gameCodeRecieved["isSingleMode"];
     // clientRooms[socket.id] = roomName;
-    roomVRWorldType[roomName] = isVRWrorld_1; // to send the VR world type in `checkRoomExistance`
+    roomVRWorldType_Mode[roomName] = { "VirEnvType": VirEnvType, "isSingleMode": isSingleMode }; // to send the VR world type in `checkRoomExistance`
 
     //TODO: send name to frontend
     socket.join(roomName);
@@ -280,7 +281,12 @@ io.on('connection', async (socket) => {
       // console.log("Info: Room exist!! roomVRWorldType[roomCode]: ", roomVRWorldType[roomCode]);
       console.log("Info: Room exist!! roomCode: ", roomCode);
       /* send back room code and V.E. type */
-      io.emit('checkRoomExistance', { roomCode: roomCode, roomStatus: true, roomVRWorldType: roomVRWorldType[roomCode] })
+      io.emit('checkRoomExistance', {
+        roomCode: roomCode,
+        roomStatus: true,
+        VirEnvType: roomVRWorldType_Mode[roomCode]['VirEnvType'],
+        "isSingleMode": roomVRWorldType_Mode[roomCode]['isSingleMode']
+      })
     } else {
       console.log("Warning: Room doesn't exist!!!??");
       io.emit('checkRoomExistance', { roomCode: roomCode, roomStatus: false })
