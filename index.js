@@ -228,7 +228,7 @@ io.on('connection', async (socket) => {
   /* request players location */
   /*********************/
   function handleRequestPlayersLocation(roomName) {
-    console.log("/🚀/ handleRequestPlayersLocation, roomName: ", roomName)
+    console.log("🚀 ~ file: index.js:232 ~ handleRequestPlayersLocation ~ roomName:", roomName)
 
     socket.to(roomName).emit('requestPlayerLocation');
   }
@@ -261,13 +261,16 @@ io.on('connection', async (socket) => {
     //let roomName = makeid(5);
     console.log("gameCodeRecieved: ", gameCodeRecieved);
     let roomName = gameCodeRecieved["gameCode"];
-    let VirEnvType = gameCodeRecieved["VirEnvType"];
+    let virEnvType = gameCodeRecieved["virEnvType"];
     let isSingleMode = gameCodeRecieved["isSingleMode"];
     // clientRooms[socket.id] = roomName;
-    roomVRWorldType_Mode[roomName] = { "VirEnvType": VirEnvType, "isSingleMode": isSingleMode }; // to send the VR world type in `checkRoomExistance`
+    roomVRWorldType_Mode[roomName] = { "virEnvType": virEnvType, "isSingleMode": isSingleMode }; // to send the VR world type in `checkRoomExistance`
+
+    console.log("----roomVRWorldType_Mode[roomName]---: ", roomVRWorldType_Mode[roomName])
 
     //TODO: send name to frontend
     socket.join(roomName);
+
     printNumRoomMembers(roomName); //Print number of members
   }
 
@@ -389,6 +392,7 @@ io.on('connection', async (socket) => {
   });
 
 
+  /* To add other player who are already conncted  */
   socket.on('player connect', function () {
     console.log('🚀(player connect) ');
     console.log("(player connect)_1a, virEnvClients.length: " + virEnvClients.length);
@@ -413,7 +417,7 @@ io.on('connection', async (socket) => {
   });
 
   /*********************************/
-  socket.on('play', function (data) {
+  socket.on("play", function (data) {
     console.log('(play1),' + currentPlayer.name + ' recv: play: ' + JSON.stringify(data));
 
     currentPlayer = {
