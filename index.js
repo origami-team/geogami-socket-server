@@ -15,8 +15,10 @@ const instructorID = {};
 /* Vir. Env. multiplayer */
 var currentPlayer = {};
 currentPlayer.name = 'unknown';
-var virEnvClients = [];
+const virEnvClientsData = {}  // new var, only with multiplayer mode
 
+/* use ony for vir. env. multiplayer mode, to connect between vir. envs. Note: doesn't connect to geogami app */
+var virEnvMultiRoomName = "multiVirRoom"; // ToDo: update is to be automatic
 
 console.log("Server Started");
 
@@ -39,13 +41,13 @@ io.on('connection', async (socket) => {
   socket.on('updateAvatarDirection', handleUpdateAvatarDirection);
   socket.on('checkRoomExistance', handleCheckRoomExistance);
 
-
   /* new impl (multiplayer-realworld) */
   // socket.on('assignPlayerNumber', handleAssignPlayerNumber);
 
   /*-----------------------------*/
   /*******************************/
   /* Start multiplayer realworld functions */
+  //#region
 
   /* check Player Previous Join */
   /*********************/
@@ -246,6 +248,7 @@ io.on('connection', async (socket) => {
 
   }
 
+  //#endregion
   /* End of multiplayer functions */
   /********************************/
   /*------------------------------*/
@@ -254,6 +257,7 @@ io.on('connection', async (socket) => {
   /*-----------------------------*/
   /*******************************/
   /* Start single player V.E. functions */
+  //#region
 
   /* step 1: join game using geogmai App  */
   function handleNewGame(gameCodeRecieved) {
@@ -277,7 +281,9 @@ io.on('connection', async (socket) => {
   /*******************************************************************************/
   /* step 2:  V.E. check if room exists (game is opend using geogmai App) or not */
   function handleCheckRoomExistance(gameCodeRecieved) {
-    let roomCode = gameCodeRecieved["gameCode"];
+    // console.log("---- gameCodeRecieved: ", gameCodeRecieved);
+
+    let roomCode = gameCodeRecieved["gameCode"];   // game code is user name
     // Check if room is created
     if (io.sockets.adapter.rooms[roomCode]) {
       // console.log("Info: Room exist!!");
@@ -287,8 +293,8 @@ io.on('connection', async (socket) => {
       io.emit('checkRoomExistance', {
         roomCode: roomCode,
         roomStatus: true,
-        VirEnvType: roomVRWorldType_Mode[roomCode]['VirEnvType'],
-        "isSingleMode": roomVRWorldType_Mode[roomCode]['isSingleMode']
+        virEnvType: roomVRWorldType_Mode[roomCode]['virEnvType'],
+        isSingleMode: roomVRWorldType_Mode[roomCode]['isSingleMode']
       })
     } else {
       console.log("Warning: Room doesn't exist!!!??");
@@ -319,17 +325,18 @@ io.on('connection', async (socket) => {
   /*******************/
   /* Avatar position */
   function handleUpdateAvatarPosition(avatarPosition) {
-    console.log("Loc", { x: avatarPosition["x_axis"], z: avatarPosition["y_axis"], r_code: avatarPosition["gameCode"] });
+    // console.log("Loc", { x: avatarPosition["x_axis"], z: avatarPosition["y_axis"], r_code: avatarPosition["gameCode"] });
     io.to(avatarPosition["gameCode"]).emit('updateAvatarPosition', { x: avatarPosition["x_axis"], z: avatarPosition["y_axis"] })
   }
 
   /********************/
   /* Avatar direction */
   function handleUpdateAvatarDirection(avatarHeading) {
-    console.log("Direction", { angleValue: avatarHeading["x_axis"], r_code: avatarHeading["gameCode"] });
+    // console.log("Direction", { angleValue: avatarHeading["x_axis"], r_code: avatarHeading["gameCode"] });
     io.to(avatarHeading["gameCode"]).emit('updateAvatarDirection', { angleValue: avatarHeading["x_axis"] })
   }
 
+  //#endregion
   /* End of single player V.E. functions */
   /****************************************/
   /*--------------------------------------*/
@@ -338,66 +345,25 @@ io.on('connection', async (socket) => {
   /*-----------------------------*/
   /*******************************/
   /* Start multiplayer Vir.Env. functions */
+  //#region
 
-  /*************/
-  /* this fun. will update other avatars' positions, 
-    in case there's an offset  */
-  socket.on('player move', function (data) {
-    // console.log('🚀(player move) data:', data);
-    //io.emit('updateAvatarPosition', { x: data["position"][0], z: data["position"][2] })
-    currentPlayer.position = data.position;
-
-    socket.broadcast.emit('player move', currentPlayer);
-    // socket.broadcast.emit('player move', currentPlayer);
-    console.log('*******(player move), move by: ' + currentPlayer.name);
-  });
-
-  /*************/
-  /* this function to make walking looks smooth */
-  socket.on('update avatar walk', function (val) {
-    console.log('🚀(avatar walk) data:', val);
-    
-    /* identify current player using stored player no */
-    currentPlayer = virEnvClients[socket[socket.id]["playerNo"]];
-
-    currentPlayer.walkVal = val;
-    socket.broadcast.emit('update avatar walk', currentPlayer);
-
-    console.log('🚀(player walk) virEnvClients[currentPlayer.playerNo].position', virEnvClients[currentPlayer.playerNo].position, ', by: ' + currentPlayer.name);
-  });
-
-  /*************/
-  /* this function to make turning looks smooth */
-  socket.on('update avatar turn', function (data) {
-    console.log('🚀(avatar turn) trunVal:', data);
-
-    /* identify current player using stored player no */
-    currentPlayer = virEnvClients[socket[socket.id]["playerNo"]];
-
-    currentPlayer.rotation = data.rotation;
-    socket.broadcast.emit('update avatar turn', currentPlayer);
-
-    console.log('🚀(player turn) virEnvClients[currentPlayer.playerNo].rotation', virEnvClients[currentPlayer.playerNo].rotation, ', by: ' + currentPlayer.name);
-  });
-
-
-  socket.on('player turn', function (data) {
-    console.log('🚀(player turn) ');
-    //console.log('recv: turn: '+JSON.stringify(data));
-    // update it -> socket.broadcast.emit
-    io.emit('updateAvatarDirection', { angleValue: data["rotation"][1] })
-    currentPlayer.rotation = data.rotation;
-
-    //socket.broadcast.emit('player turn', currentPlayer);
-  });
-
-
-  /* To add other player who are already conncted  */
+  /***************************************************** */
+  /* step 1: add other players who are already connected */
+  // ToDo: update fun. names
   socket.on('player connect', function () {
     console.log('🚀(player connect) ');
-    console.log("(player connect)_1a, virEnvClients.length: " + virEnvClients.length);
-    if (virEnvClients.length > 0) {
 
+    /* to empty players list when all players are logged off */
+    if (!io.sockets.adapter.rooms[virEnvMultiRoomName]) {
+      console.log("🚀 ~ --Empty virEnvMultiRoomName---:", virEnvMultiRoomName)
+      virEnvClientsData[virEnvMultiRoomName] = []
+    }
+
+    let virEnvClients = (virEnvClientsData[virEnvMultiRoomName] ? virEnvClientsData[virEnvMultiRoomName] : []);
+
+    console.log("--(player connect)_1a, virEnvClients.length: " + virEnvClients.length);
+
+    if (virEnvClients.length > 0) {
       console.log("(player connect)_1b, virEnvClients.detail - virEnvClients[0].name: " + virEnvClients[0].name);
 
       for (var i = 0; i < virEnvClients.length; i++) {
@@ -408,7 +374,8 @@ io.on('connection', async (socket) => {
           //health: virEnvClients[i].health
         };
         // in your current game, we need to tell you about the other players.
-        socket.emit('other player connected', playerConnected);
+        // socket.emit('other player connected', playerConnected);
+        io.to(socket.id).emit('other player connected', playerConnected);
         console.log('(player connect)_2, emit: other player connected: ' + JSON.stringify(playerConnected));
       }
     }
@@ -417,8 +384,10 @@ io.on('connection', async (socket) => {
   });
 
   /*********************************/
+  /* step 2: add user data to main list and notify other players that a new player has joined */
   socket.on("play", function (data) {
     console.log('(play1),' + currentPlayer.name + ' recv: play: ' + JSON.stringify(data));
+    let virEnvClients = (virEnvClientsData[virEnvMultiRoomName] ? virEnvClientsData[virEnvMultiRoomName] : []);
 
     currentPlayer = {
       name: data.name,
@@ -429,17 +398,106 @@ io.on('connection', async (socket) => {
       playerNo: virEnvClients.length      /* to update player position and direction  */
     };
     virEnvClients.push(currentPlayer);
-    // in your current game, tell you that you have joined
-    console.log('(play2),' + currentPlayer.name + ' emit: play: ' + JSON.stringify(currentPlayer));
-    socket.emit('play', currentPlayer);
-    // in your current game, we need to tell the other players about you.
-    socket.broadcast.emit('other player connected', currentPlayer);
+
+    virEnvClientsData[virEnvMultiRoomName] = virEnvClients;
 
     /* store player name and no, to be able to update avatar position and turn */
-    socket[socket.id] = {playerName: currentPlayer.name, playerNo: currentPlayer.playerNo };
+    socket[socket.id] = { playerName: currentPlayer.name, playerNo: currentPlayer.playerNo };
+
+    /* Join player to temp static multiplayer vir room */
+    socket.join(virEnvMultiRoomName);
+
+    // in your current game, tell you that you have joined
+    console.log('(play2),' + currentPlayer.name + ' emit: play: ' + JSON.stringify(currentPlayer));
+    /*  */
+    /* step 3: prepare current player avatar */
+    // socket.emit('play', currentPlayer);
+    io.to(socket.id).emit('play', currentPlayer);
+
+    /* step 4: notify other players in room except sender that a new player has joined */
+    // socket.broadcast.emit('other player connected', currentPlayer);
+    socket.to(virEnvMultiRoomName).emit('other player connected', currentPlayer);
+
   });
+
+  /*************/
+  /* this fun. will update other avatars' positions every few seconds, 
+    in case there's an offset  */
+  socket.on('player move', function (data) {
+    console.log('🚀(player move) data:', data);
+
+    let virEnvClients = (virEnvClientsData[virEnvMultiRoomName] ? virEnvClientsData[virEnvMultiRoomName] : []);
+
+    /* identify current player using stored player no */
+    if (socket[socket.id] && virEnvClients[socket[socket.id]["playerNo"]]) {
+
+      currentPlayer = virEnvClients[socket[socket.id]["playerNo"]];
+
+      currentPlayer.position = data.position;
+
+      socket.broadcast.to(virEnvMultiRoomName).emit('player move', currentPlayer);      // except sender
+
+      console.log('*******(player move), move by: ' + currentPlayer.name);
+    }
+
+
+  });
+
+  /*************/
+  /* this function to make walking looks smooth */
+  socket.on('update avatar walk', function (val) {
+    // console.log("🚀 ~ update avatar walk ~ avatar walk, val:", val)
+
+    let virEnvClients = (virEnvClientsData[virEnvMultiRoomName] ? virEnvClientsData[virEnvMultiRoomName] : []);
+
+    /* identify current player using stored player no */
+    if (socket[socket.id] != undefined && virEnvClients[socket[socket.id]["playerNo"]]) {
+      currentPlayer = virEnvClients[socket[socket.id]["playerNo"]];
+
+      currentPlayer.walkVal = val;
+      /* To update other users' avatar positions */
+      socket.to(virEnvMultiRoomName).emit('update avatar walk', currentPlayer);
+
+      console.log('🚀(player walk) virEnvClients[currentPlayer.playerNo].position', virEnvClients[currentPlayer.playerNo].position, ', by: ' + currentPlayer.name);
+    }
+  });
+
+  /*************/
+  /* this function to make turning looks smooth */
+  socket.on('update avatar turn', function (data) {
+    // console.log("🚀 ~ update avatar turn ~ avatar turn, data:", data)
+
+    let virEnvClients = (virEnvClientsData[virEnvMultiRoomName] ? virEnvClientsData[virEnvMultiRoomName] : []);
+
+    /* identify current player using stored player no */
+    if (socket[socket.id] != undefined && virEnvClients[socket[socket.id]["playerNo"]]) {
+      currentPlayer = virEnvClients[socket[socket.id]["playerNo"]];
+
+      currentPlayer.rotation = data.rotation;
+
+
+      // socket.broadcast.emit('update avatar turn', currentPlayer);
+      socket.to(virEnvMultiRoomName).emit('update avatar turn', currentPlayer);
+
+      console.log('🚀(player turn) virEnvClients[currentPlayer.playerNo].rotation', virEnvClients[currentPlayer.playerNo].rotation, ', by: ' + currentPlayer.name);
+    }
+  });
+
+
+  // check it out: not used
+  socket.on('player turn', function (data) {
+    console.log('🚀(player turn) ');
+    //console.log('recv: turn: '+JSON.stringify(data));
+    // update it -> socket.broadcast.emit
+    io.emit('updateAvatarDirection', { angleValue: data["rotation"][1] })
+    currentPlayer.rotation = data.rotation;
+
+    //socket.broadcast.emit('player turn', currentPlayer);
+  });
+  
   //#endregion
 
+  //#endregion
   /* End of multiplayer Vir. Env. functions */
   /********************************/
   /*------------------------------*/
