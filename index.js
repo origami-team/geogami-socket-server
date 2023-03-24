@@ -41,8 +41,11 @@ io.on('connection', async (socket) => {
   socket.on('updateAvatarDirection', handleUpdateAvatarDirection);
   socket.on('checkRoomExistance', handleCheckRoomExistance);
 
-  /* new impl (multiplayer-realworld) */
-  // socket.on('assignPlayerNumber', handleAssignPlayerNumber);
+  /* new impl (vir single) */
+  socket.on('updateAvaterInitialPosition', handleUpdateAvaterInitialPosition);
+  socket.on('requestInitialAvatarPositionByVirApp', handleRequestInitialAvatarPositionByVirApp);
+  socket.on('deliverInitialAvatarPositionByGeoApp', handleDeliverInitialAvatarPositionByGeoApp);
+
 
   /*-----------------------------*/
   /*******************************/
@@ -67,7 +70,7 @@ io.on('connection', async (socket) => {
       console.log("--🚀---🚀-- (checkPlayerPreviousJoin) player is found diconnected: ", sPlayerName);
       isDisconnected = true;
 
-      /* Join player to room */
+      /* Rejoin (multiplayer R. W.) player to room */
       socket.join(sRoomName);
       /* store room name and player id using socket, to use it in when user diconnect*/
       socket.playerData = { roomName: sRoomName, playerName: sPlayerName, playerNo: sPlayerNo };
@@ -130,7 +133,7 @@ io.on('connection', async (socket) => {
       // console.log("🚀🚀🚀(handleJoinGame) roomsData1(length): ", roomsData[roomName].length)
     }
 
-    /* Join player to room */
+    /* Join (multiplayer R. W.) player to room */
     socket.join(roomName);
 
     /* when instructor join game room */
@@ -273,7 +276,10 @@ io.on('connection', async (socket) => {
     console.log("----roomVRWorldType_Mode[roomName]---: ", roomVRWorldType_Mode[roomName])
 
     //TODO: send name to frontend
+    /* Join (single & multi individually V.E. from geogami app) player to room */
     socket.join(roomName);
+    /* will be used in updating avatar initial position */
+    clientRooms[socket.id] = roomName;
 
     printNumRoomMembers(roomName); //Print number of members
   }
@@ -310,11 +316,13 @@ io.on('connection', async (socket) => {
     const room = io.sockets.adapter.rooms[roomName];
     console.log("room: ", room);
 
-    // clientRooms[socket.id] = roomName;
-
     // Check if room is created
     //if(! io.sockets.adapter.rooms[roomName]){
+    /* Join (single & multi - individually V.E. from Vir. app) player to room */
     socket.join(roomName);
+    /* will be used in updating avatar initial position */
+    clientRooms[socket.id] = roomName;
+
     printNumRoomMembers(roomName); //Print number of members
     /* } else {
       console.log("Warning: Room doesn't exist!!!");
@@ -326,14 +334,35 @@ io.on('connection', async (socket) => {
   /* Avatar position */
   function handleUpdateAvatarPosition(avatarPosition) {
     // console.log("Loc", { x: avatarPosition["x_axis"], z: avatarPosition["y_axis"], r_code: avatarPosition["gameCode"] });
-    io.to(avatarPosition["gameCode"]).emit('updateAvatarPosition', { x: avatarPosition["x_axis"], z: avatarPosition["y_axis"] })
+    socket.to(avatarPosition["gameCode"]).emit('updateAvatarPosition', { x: avatarPosition["x_axis"], z: avatarPosition["y_axis"] })
   }
 
   /********************/
   /* Avatar direction */
   function handleUpdateAvatarDirection(avatarHeading) {
-    // console.log("Direction", { angleValue: avatarHeading["x_axis"], r_code: avatarHeading["gameCode"] });
-    io.to(avatarHeading["gameCode"]).emit('updateAvatarDirection', { angleValue: avatarHeading["x_axis"] })
+    console.log("🚀 ~ handleUpdateAvatarDirection ~ avatarHeading:", avatarHeading)
+    console.log("Direction", { angleValue: avatarHeading["y_axis"], r_code: avatarHeading["gameCode"] });
+    socket.to(avatarHeading["gameCode"]).emit('updateAvatarDirection', { angleValue: avatarHeading["y_axis"] })
+  }
+
+  // temp: put it down
+  function handleUpdateAvaterInitialPosition(data) {
+    console.log("🚀 ~ UpdateAvaterInitialPosition ~ data:", data);
+
+    socket.to(data["name"]).emit("set avatar initial Position", data)
+    // socket.emit("update avatar initial Position", data)
+  }
+
+  function handleRequestInitialAvatarPositionByVirApp() {
+    console.log("🚀 ~ handleRequestInitialAvatarPosition ~ roomName2:", clientRooms[socket.id])
+
+    socket.to(clientRooms[socket.id]).emit('requestAvatarInitialPosition');
+  }
+  
+  function handleDeliverInitialAvatarPositionByGeoApp(data) {
+    console.log("🚀 ~ handleDeliverInitialAvatarPositionByGeoApp ~ roomName:", data);
+
+    socket.to(clientRooms[socket.id]).emit('set avatar initial Position', {initialPosition: data['initialPosition'], initialRotation: data['initialRotation']});
   }
 
   //#endregion
@@ -405,6 +434,8 @@ io.on('connection', async (socket) => {
     socket[socket.id] = { playerName: currentPlayer.name, playerNo: currentPlayer.playerNo };
 
     /* Join player to temp static multiplayer vir room */
+    /* Join (multi V.E. from Vir. app) player to room */
+
     socket.join(virEnvMultiRoomName);
 
     // in your current game, tell you that you have joined
@@ -494,7 +525,7 @@ io.on('connection', async (socket) => {
 
     //socket.broadcast.emit('player turn', currentPlayer);
   });
-  
+
   //#endregion
 
   //#endregion
