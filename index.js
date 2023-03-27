@@ -42,7 +42,6 @@ io.on('connection', async (socket) => {
   socket.on('checkRoomExistance', handleCheckRoomExistance);
 
   /* new impl (vir single) */
-  socket.on('updateAvaterInitialPosition', handleUpdateAvaterInitialPosition);
   socket.on('requestInitialAvatarPositionByVirApp', handleRequestInitialAvatarPositionByVirApp);
   socket.on('deliverInitialAvatarPositionByGeoApp', handleDeliverInitialAvatarPositionByGeoApp);
 
@@ -345,16 +344,9 @@ io.on('connection', async (socket) => {
     socket.to(avatarHeading["gameCode"]).emit('updateAvatarDirection', { angleValue: avatarHeading["y_axis"] })
   }
 
-  // temp: put it down
-  function handleUpdateAvaterInitialPosition(data) {
-    console.log("🚀 ~ UpdateAvaterInitialPosition ~ data:", data);
-
-    socket.to(data["name"]).emit("set avatar initial Position", data)
-    // socket.emit("update avatar initial Position", data)
-  }
-
+  /*  */
   function handleRequestInitialAvatarPositionByVirApp() {
-    console.log("🚀 ~ handleRequestInitialAvatarPosition ~ roomName2:", clientRooms[socket.id])
+    console.log("🚀 ~ handleRequestInitialAvatarPositionByVirApp ~ roomName2:", clientRooms[socket.id])
 
     socket.to(clientRooms[socket.id]).emit('requestAvatarInitialPosition');
   }
