@@ -354,7 +354,7 @@ io.on('connection', async (socket) => {
   function handleDeliverInitialAvatarPositionByGeoApp(data) {
     console.log("🚀 ~ handleDeliverInitialAvatarPositionByGeoApp ~ roomName:", data);
 
-    socket.to(clientRooms[socket.id]).emit('set avatar initial Position', {initialPosition: data['initialPosition'], initialRotation: data['initialRotation']});
+    socket.to(clientRooms[socket.id]).emit('set avatar initial Position', {initialPosition: data['initialPosition'], initialRotation: data['initialRotation'], virEnvType: data['virEnvType']});
   }
 
   //#endregion
