@@ -269,6 +269,7 @@ io.on('connection', async (socket) => {
     let roomName = gameCodeRecieved["gameCode"];
     let virEnvType = gameCodeRecieved["virEnvType"];
     let isSingleMode = gameCodeRecieved["isSingleMode"];
+
     // clientRooms[socket.id] = roomName;
     roomVRWorldType_Mode[roomName] = { "virEnvType": virEnvType, "isSingleMode": isSingleMode }; // to send the VR world type in `checkRoomExistance`
 
@@ -293,7 +294,7 @@ io.on('connection', async (socket) => {
     if (io.sockets.adapter.rooms[roomCode]) {
       // console.log("Info: Room exist!!");
       // console.log("Info: Room exist!! roomVRWorldType[roomCode]: ", roomVRWorldType[roomCode]);
-      console.log("Info: Room exist!! roomCode: ", roomCode);
+      console.log("Info: Room exist!!111 roomCode: ", roomCode);
       /* send back room code and V.E. type */
       io.emit('checkRoomExistance', {
         roomCode: roomCode,
@@ -301,6 +302,7 @@ io.on('connection', async (socket) => {
         virEnvType: roomVRWorldType_Mode[roomCode]['virEnvType'],
         isSingleMode: roomVRWorldType_Mode[roomCode]['isSingleMode']
       })
+      // console.log("Info: Room exist!!222 roomCode: ", roomCode);
     } else {
       console.log("Warning: Room doesn't exist!!!??");
       io.emit('checkRoomExistance', { roomCode: roomCode, roomStatus: false })
@@ -344,17 +346,19 @@ io.on('connection', async (socket) => {
     socket.to(avatarHeading["gameCode"]).emit('updateAvatarDirection', { angleValue: avatarHeading["y_axis"] })
   }
 
-  /*  */
+  /********************/
+  /* Send request of initial pos & dir from Vir App to Geogami App */
   function handleRequestInitialAvatarPositionByVirApp() {
     console.log("🚀 ~ handleRequestInitialAvatarPositionByVirApp ~ roomName2:", clientRooms[socket.id])
 
     socket.to(clientRooms[socket.id]).emit('requestAvatarInitialPosition');
   }
-  
+
+  /* Send initial pos & dir from Geogami App to Vir App */
   function handleDeliverInitialAvatarPositionByGeoApp(data) {
     console.log("🚀 ~ handleDeliverInitialAvatarPositionByGeoApp ~ roomName:", data);
 
-    socket.to(clientRooms[socket.id]).emit('set avatar initial Position', {initialPosition: data['initialPosition'], initialRotation: data['initialRotation'], virEnvType: data['virEnvType']});
+    socket.to(clientRooms[socket.id]).emit('set avatar initial Position', { initialPosition: data['initialPosition'], initialRotation: data['initialRotation'], virEnvType: data['virEnvType'] });
   }
 
   //#endregion
