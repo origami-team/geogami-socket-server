@@ -274,6 +274,7 @@ io.on('connection', async (socket) => {
     roomVRWorldType_Mode[roomName] = { "virEnvType": virEnvType, "isSingleMode": isSingleMode }; // to send the VR world type in `checkRoomExistance`
 
     console.log("----roomVRWorldType_Mode[roomName]---: ", roomVRWorldType_Mode[roomName])
+    console.log("-------\n\n")
 
     //TODO: send name to frontend
     /* Join (single & multi individually V.E. from geogami app) player to room */
@@ -281,13 +282,13 @@ io.on('connection', async (socket) => {
     /* will be used in updating avatar initial position */
     clientRooms[socket.id] = roomName;
 
-    printNumRoomMembers(roomName); //Print number of members
+    // printNumRoomMembers(roomName); //Print number of members
   }
 
   /*******************************************************************************/
   /* step 2:  V.E. check if room exists (game is opend using geogmai App) or not */
   function handleCheckRoomExistance(gameCodeRecieved) {
-    // console.log("---- gameCodeRecieved: ", gameCodeRecieved);
+    console.log("---- gameCodeRecieved: ", gameCodeRecieved);
 
     let roomCode = gameCodeRecieved["gameCode"];   // game code is user name
     // Check if room is created
@@ -302,10 +303,14 @@ io.on('connection', async (socket) => {
         virEnvType: roomVRWorldType_Mode[roomCode]['virEnvType'],
         isSingleMode: roomVRWorldType_Mode[roomCode]['isSingleMode']
       })
-      // console.log("Info: Room exist!!222 roomCode: ", roomCode);
+      console.log("Info: Room exist!!222 roomCode: ", roomCode);
+      console.log("-------\n\n")
     } else {
       console.log("Warning: Room doesn't exist!!!??");
-      io.emit('checkRoomExistance', { roomCode: roomCode, roomStatus: false })
+      io.emit('checkRoomExistance', {
+        roomCode: roomCode,
+        roomStatus: false
+      })
     }
   }
 
@@ -314,8 +319,8 @@ io.on('connection', async (socket) => {
   function handleJoinVEGame(roomNameObj) {
     let roomName = roomNameObj["gameCode"];
     console.log("roomName obj: ", roomNameObj);
-    const room = io.sockets.adapter.rooms[roomName];
-    console.log("room: ", room);
+    // const room = io.sockets.adapter.rooms[roomName];
+    // console.log("room: ", room);
 
     // Check if room is created
     //if(! io.sockets.adapter.rooms[roomName]){
@@ -324,7 +329,7 @@ io.on('connection', async (socket) => {
     /* will be used in updating avatar initial position */
     clientRooms[socket.id] = roomName;
 
-    printNumRoomMembers(roomName); //Print number of members
+    //* printNumRoomMembers(roomName); //Print number of members
     /* } else {
       console.log("Warning: Room doesn't exist!!!");
     } */
@@ -334,7 +339,7 @@ io.on('connection', async (socket) => {
   /*******************/
   /* Avatar position */
   function handleUpdateAvatarPosition(avatarPosition) {
-    // console.log("Loc", { x: avatarPosition["x_axis"], z: avatarPosition["y_axis"], r_code: avatarPosition["gameCode"] });
+    console.log("Loc", { x: avatarPosition["x_axis"], z: avatarPosition["y_axis"], r_code: avatarPosition["gameCode"] });
     socket.to(avatarPosition["gameCode"]).emit('updateAvatarPosition', { x: avatarPosition["x_axis"], z: avatarPosition["y_axis"] })
   }
 
@@ -354,11 +359,14 @@ io.on('connection', async (socket) => {
     socket.to(clientRooms[socket.id]).emit('requestAvatarInitialPosition');
   }
 
+  /******************************************************/
   /* Send initial pos & dir from Geogami App to Vir App */
   function handleDeliverInitialAvatarPositionByGeoApp(data) {
     console.log("🚀 ~ handleDeliverInitialAvatarPositionByGeoApp ~ roomName:", data);
 
     socket.to(clientRooms[socket.id]).emit('set avatar initial Position', { initialPosition: data['initialPosition'], initialRotation: data['initialRotation'], virEnvType: data['virEnvType'] });
+
+    console.log("-------\n\n")
   }
 
   //#endregion
