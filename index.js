@@ -318,7 +318,7 @@ io.on('connection', async (socket) => {
   /* step 3: to join game using V.E. App  */
   function handleJoinVEGame(roomNameObj) {
     let roomName = roomNameObj["gameCode"];
-    console.log("roomName obj: ", roomNameObj);
+    console.log("🚀 ~ handleJoinVEGame ~ roomName:", roomName)
     // const room = io.sockets.adapter.rooms[roomName];
     // console.log("room: ", room);
 
@@ -334,6 +334,7 @@ io.on('connection', async (socket) => {
       console.log("Warning: Room doesn't exist!!!");
     } */
     //ToDO: add notificatoin that a new user has been joined
+    console.log("-------\n\n")
   }
 
   /*******************/
@@ -445,7 +446,7 @@ io.on('connection', async (socket) => {
     // in your current game, tell you that you have joined
     console.log('(play2),' + currentPlayer.name + ' emit: play: ' + JSON.stringify(currentPlayer));
     /*  */
-    /* step 3: prepare current player avatar */
+    /* step 3: prepare current player avatar in unitly app*/
     // socket.emit('play', currentPlayer);
     io.to(socket.id).emit('play', currentPlayer);
 
