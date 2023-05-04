@@ -48,7 +48,7 @@ io.on('connection', async (socket) => {
 
   /*-----------------------------*/
   /*******************************/
-  /* Start multiplayer realworld functions */
+  /* multiplayer functions - from GeoGami App side */
   //#region
 
   /* check Player Previous Join */
@@ -113,6 +113,7 @@ io.on('connection', async (socket) => {
   });
 
   /* Join room */
+  //* for instructor and players in (Teacher room <teacherID + gameID>)
   /*********************/
   async function handleJoinGame(playerInfo) {
     console.log("🚀 (handleJoinGame) playerInfo: ", playerInfo);
@@ -120,7 +121,7 @@ io.on('connection', async (socket) => {
     let roomName = playerInfo['roomName'];
     let playerName = playerInfo['playerName'];
 
-    /* check whether room existsm, if not initialze game status object */
+    /* check whether room exists, if not initialze game status object */
     /* this will allow instructor to rejoin when disconnected for any reason */
     /* true only when room is empty */
     if (!io.sockets.adapter.rooms[roomName]) {
@@ -261,7 +262,7 @@ io.on('connection', async (socket) => {
   /* Start single player V.E. functions */
   //#region
 
-  /* step 1: join game using geogmai App  */
+  /* step 1: join game using geogami App  */
   function handleNewGame(gameCodeRecieved) {
     console.log("------- Vir. Env. single mode ------- ");
     //let roomName = makeid(5);
@@ -378,7 +379,7 @@ io.on('connection', async (socket) => {
 
   /*-----------------------------*/
   /*******************************/
-  /* Start multiplayer Vir.Env. functions */
+  /* Multiplayer functions - from Vir.Env. App side */
   //#region
 
   /***************************************************** */
@@ -530,8 +531,6 @@ io.on('connection', async (socket) => {
 
     //socket.broadcast.emit('player turn', currentPlayer);
   });
-
-  //#endregion
 
   //#endregion
   /* End of multiplayer Vir. Env. functions */
